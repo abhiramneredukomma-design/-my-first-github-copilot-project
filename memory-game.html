@@ -13,6 +13,7 @@
             --card-front: #ffffff;
             --text-color: #333333;
             --success-color: #4caf50;
+            --muted-color: #666666;
         }
 
         * {
@@ -54,7 +55,7 @@
             justify-content: space-around;
             flex-wrap: wrap;
             gap: 1rem;
-            background: white;
+            background: var(--card-front);
             padding: 1rem;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -173,7 +174,7 @@
         }
 
         .modal-content {
-            background: white;
+            background: var(--card-front);
             padding: 2rem;
             border-radius: 8px;
             text-align: center;
@@ -190,9 +191,35 @@
         .scores-list {
             max-width: 600px;
             margin: 1rem auto;
-            background: white;
+            background: var(--card-front);
             padding: 1rem;
             border-radius: 8px;
+        }
+
+        /* Dark theme overrides applied to documentElement via .dark-theme */
+        .dark-theme {
+            --primary-color: #3b82f6;
+            --background-color: #0f1720;
+            --card-back: #1f2937;
+            --card-front: #0b1220;
+            --text-color: #e6eef8;
+            --muted-color: #9aa6b2;
+            --success-color: #16a34a;
+        }
+
+        /* Theme toggle button */
+        .theme-toggle {
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            background: transparent;
+            border: 1px solid rgba(0,0,0,0.08);
+            color: var(--text-color);
+            font-size: 1.1rem;
+        }
+
+        .theme-toggle:focus {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 2px;
         }
 
         /* Responsive design adjustments */
@@ -233,6 +260,10 @@
             <div class="stat">
                 <h2>Rating</h2>
                 <p class="stat-value rating" aria-live="polite">★★★</p>
+            </div>
+            <div class="stat">
+                <h2>Theme</h2>
+                <button class="theme-toggle" aria-pressed="false" aria-label="Toggle theme">🌙</button>
             </div>
         </div>
 
@@ -285,9 +316,51 @@
             rating: document.querySelector('.rating'),
             modal: document.querySelector('.modal'),
             finalStats: document.querySelector('.final-stats'),
+            themeToggle: document.querySelector('.theme-toggle'),
             gridButtons: document.querySelectorAll('.grid-btn'),
             scoresList: document.querySelector('.scores-list')
         };
+
+        // Theme handling: apply and persist theme preference
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark-theme');
+                if (elements.themeToggle) {
+                    elements.themeToggle.setAttribute('aria-pressed', 'true');
+                    elements.themeToggle.textContent = '☀️';
+                }
+            } else {
+                document.documentElement.classList.remove('dark-theme');
+                if (elements.themeToggle) {
+                    elements.themeToggle.setAttribute('aria-pressed', 'false');
+                    elements.themeToggle.textContent = '🌙';
+                }
+            }
+        }
+
+        function initTheme() {
+            try {
+                const stored = localStorage.getItem('theme');
+                let theme = 'light';
+                if (stored === 'dark' || stored === 'light') {
+                    theme = stored;
+                } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    theme = 'dark';
+                }
+                applyTheme(theme);
+            } catch (e) {
+                applyTheme('light');
+            }
+        }
+
+        if (elements.themeToggle) {
+            elements.themeToggle.addEventListener('click', () => {
+                const isDark = document.documentElement.classList.contains('dark-theme');
+                const newTheme = isDark ? 'light' : 'dark';
+                applyTheme(newTheme);
+                try { localStorage.setItem('theme', newTheme); } catch (e) {}
+            });
+        }
 
         // Card symbols (emojis) for both grid sizes
         const symbols = {
@@ -498,7 +571,8 @@
             });
         });
 
-        // Initialize game
+        // Initialize theme and game
+        initTheme();
         updateScoresList();
         initializeGrid();
     </script>
